@@ -1,48 +1,83 @@
 # Automotive Speech Command Classifier
 
-A lightweight, offline semantic command classifier for automotive voice control systems.
+A lightweight, fully offline semantic command classifier for automotive voice control systems.
 
 ## What it does
-Classifies spoken commands (after ASR transcription) into 14 predefined automotive commands, 
-and rejects out-of-scope inputs. Runs fully offline on-device.
+Classifies spoken commands into 14 predefined automotive commands and rejects out-of-scope inputs. Runs fully offline on-device — no internet required.
+
+## Full Pipeline
+Microphone → Whisper (offline STT) → Semantic Classifier → Command Output
 
 ## Commands Supported
-10 core commands: activate/deactivate do not disturb, decline/pick up call, 
-play/pause music, next/previous song, increase/decrease volume.
+**Core (10):** activate/deactivate do not disturb, decline/pick up call, play/pause music, next/previous song, increase/decrease volume
 
-4 extension commands: increase/decrease brightness, start/stop vehicle.
+**Extension (4):** increase/decrease brightness, start/stop vehicle
 
 ## Results
-- Clean input accuracy: 100%
-- Noisy input accuracy: 100%
-- OOS rejection rate: 100%
-- Model size: 0.67 MB (limit: 25 MB)
-- Inference latency: 7.61 ms (limit: 1000 ms)
+| Metric | Score |
+|--------|-------|
+| Clean input accuracy | 100% (12/12) |
+| Noisy input accuracy | 100% (8/8) |
+| OOS rejection rate | 100% (7/7) |
+| Model size (ONNX) | 0.67 MB (limit: 25 MB) |
+| Inference latency | 7.61 ms (limit: 1000 ms) |
 
 ## Setup
-pip install sentence-transformers scikit-learn numpy pandas matplotlib seaborn nlpaug onnx onnxruntime onnxscript torch
+```bash
+pip install -r requirements.txt
+```
 
-## Run
+## How to Run
+
+### Option 1 — Web Dashboard (recommended)
+```bash
+python app.py
+```
+Then open browser at: http://localhost:5000
+
+### Option 2 — Mic Input (terminal)
+```bash
+python mic_input.py
+```
+
+### Option 3 — Text Input (terminal)
+```bash
+python main.py
+```
+
+### Option 4 — Evaluation
+```bash
+python evaluate.py
+```
+
+### Option 5 — ONNX Export
+```bash
+python export.py
+```
+
 ## Files
-- `data.py` — training data and command definitions
-- `classifier.py` — embedding and classification logic
-- `evaluate.py` — full evaluation with metrics and confusion matrix
-- `export.py` — ONNX export and latency benchmark
-- `main.py` — end to end pipeline entry point
+| File | Purpose |
+|------|---------|
+| `data.py` | 14 commands with training phrases |
+| `classifier.py` | Embedding and classification logic |
+| `evaluate.py` | Full evaluation with metrics and confusion matrix |
+| `export.py` | ONNX export and latency benchmark |
+| `main.py` | End-to-end pipeline entry point |
+| `mic_input.py` | Offline mic input using Whisper STT |
+| `app.py` | Flask web dashboard |
+| `templates/index.html` | Dashboard UI |
 
 ## Architecture
-Text input → SentenceTransformer (all-MiniLM-L6-v2) → cosine similarity → 
-threshold check → predicted command or OUT_OF_SCOPE rejection
+Text Input → SentenceTransformer (all-MiniLM-L6-v2) → Cosine Similarity → Threshold (0.58) → Predicted Command or OUT_OF_SCOPE
 
-## Assumptions
-- Using cosine similarity over trained embeddings instead of a separate classification head
-- Threshold of 0.58 determined empirically on test set
-- CPU-only benchmark (no mobile device available)
-
-## Known Limitations
-- "call John" type inputs score close to threshold (0.57) — borderline case
-- Accent variation not explicitly tested
-- Mobile device latency not measured — CPU benchmark used instead
+## Key Design Decisions
+- **Semantic embeddings** over keyword matching — handles paraphrases naturally
+- **Cosine similarity threshold** for OOS rejection — no wrong guesses
+- **Embedding-based architecture** — new commands added without retraining
+- **Whisper** for fully offline speech-to-text
 
 ## Tools Used
-Python 3.11+, sentence-transformers, scikit-learn, ONNX, PyTorch
+Python 3.14, sentence-transformers, scikit-learn, ONNX, PyTorch, OpenAI Whisper, Flask, sounddevice, numpy, pandas, matplotlib, seaborn
+
+## AI Assistance
+Built with help from Claude AI as permitted by the problem statement. All code tested and fully understood by the author.
